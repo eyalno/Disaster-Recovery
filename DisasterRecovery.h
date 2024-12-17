@@ -11,8 +11,9 @@ class DisasterRecovery {
 private:
     size_t N;
     std::vector<Commit> commits;
+    
     //a 2 level map container of file name -> opauqeId -> commit ID.
-    std::unordered_map<FILE, int>> fileToRepo;
+    std::unordered_map<std::string, std::unordered_map<std::string, int>> fileToRepo;
     UnionFind unionFind;
     std::unordered_map<int, std::vector<Commit>> repositories;
 
