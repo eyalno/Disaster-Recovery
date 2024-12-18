@@ -1,14 +1,12 @@
-#ifndef COMMIT_H
-#define COMMIT_H
+#pragma once
 
 #include "File.h"
 #include <vector>
 #include <cstdint>
 
 struct Commit {
-    uint64_t id = 0;
-    uint64_t timeStamp = 0;
+    uint64_t id{};
+    uint64_t timeStamp{};
     std::vector<File> files;
 };
 
-#endif // COMMIT_H

@@ -1,11 +1,10 @@
-#ifndef UNIONFIND_H
-#define UNIONFIND_H
+#pragma once
 
 #include <unordered_map>
 
 class UnionFind {
 private:
-    std::unordered_map<int, int> parent;
+    std::unordered_map<int, int> root;
     std::unordered_map<int, int> rank;
 
 public:
@@ -14,4 +13,4 @@ public:
     bool unionSets(int x, int y);
 };
 
-#endif // UNIONFIND_H
+

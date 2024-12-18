@@ -4,21 +4,20 @@
 #include <stdexcept>
 #include <algorithm>
 
+
 using namespace std;
 
 void DisasterRecovery::processCommit(const string& inputLine) {
     istringstream ss(inputLine);
     Commit commit;
-
-    // input exampe: id 38024 timestamp 74820 foo.py ac819f bar.py 0d82b9
-    //add validation 
+    
     string idToken, timeToken;
     if (!(ss >> idToken >> commit.id >> timeToken >> commit.timeStamp)) {
-        return; // Skip malformed entries
+        return; // discared malformed entries
     }
 
     if (!unionFind.addCommit(commit.id)) 
-        return; //discared malformed entries. commit id need to be unique.
+        return; //discared malformed entries: commit id need to be unique.
 
     string filePath, opaqueId;
     while (ss >> filePath >> opaqueId) {
@@ -30,22 +29,28 @@ void DisasterRecovery::processCommit(const string& inputLine) {
         const string& path = file.getPath();
         const string& id = file.getOpaqueID();
 
-        //matching path + opaqueId joins commit id to a repository   
-        // add the new file the repo if not exists, if it does add commit to the matching repo 
-        if (fileToRepo[path].count(id) == 0) {
-            fileToRepo[path][id] = commit.id;
-        } else {
-            int existingCommit = fileToRepo[path][id];
+        //new file introduced. add to fileRepo with the commit id of the entry
+        if (pathIdCommit[path].count(id) == 0) { //all files will be inserted here. 
+            pathIdCommit[path][id] = commit.id; 
+            idPathCommit[id][path] = commit.id; //reverse to check for ambiguity  
+        } else {//the file is already belongs to another commit so we join both commits
+            int existingCommit = pathIdCommit[path][id];
             unionFind.unionSets(commit.id, existingCommit);
         }
-        // checking ambiguity for every file added
-        // loop on all memebers of the 2nd level map that matches file path. 
-        for (const auto& [opaqueId,commitID] : fileToRepo[path]) {
-            if (opaqueId != id && unionFind.find(commitID) == unionFind.find(commit.id)  ) {
+
+        // checking ambiguity for every file we try to add 
+        //we added the file now finding all connected other opaque. if they are in the same repo/set = Ambiguity
+        for (const auto& [opaqueId,commitID] : pathIdCommit[path]) {
+            if (opaqueId != id && unionFind.find(commitID) == unionFind.find(commit.id)) {
                 throw logic_error("AMBIGUOUS INPUT!");
             }
         }
-
+        //checking ambiguity for opaqueId -> path
+        for (const auto& [otherPath,commitID] : idPathCommit[id]) {
+            if (otherPath != path && unionFind.find(commitID) == unionFind.find(commit.id)) {
+                throw logic_error("AMBIGUOUS INPUT!");
+            }
+        }
     }
 
     commits.push_back(std::move(commit));
@@ -54,13 +59,10 @@ void DisasterRecovery::processCommit(const string& inputLine) {
 //build the repositories, the repo's id's are the unique roots of the unionFind class
 void DisasterRecovery::buildRepositories() {
     for (auto& commit : commits) {
-        int repoId = unionFind.find(commit.id);
+        int repoId = unionFind.find(commit.id); //the unionFind root is the repo id 
         repositories[repoId].push_back(std::move(commit)); //move to avoid expensive copying
     }
-
-    
-
-
+    //building the newly organized repositiry increasing order of timeStamp then id
     for (auto& [repoId, repoCommits] : repositories) {
         sort(repoCommits.begin(), repoCommits.end(), [](const Commit& a, const Commit& b) {
             return a.timeStamp < b.timeStamp || (a.timeStamp == b.timeStamp && a.id < b.id);
@@ -68,15 +70,15 @@ void DisasterRecovery::buildRepositories() {
     }
 }
 
-void DisasterRecovery::handleQueries(int R) {
+void DisasterRecovery::handleQueries(int R, ifstream & inputFile) {
     for (int i = 0; i < R; ++i) {
         uint64_t startTime, endTime;
         string filePath, opaqueId;
-        cin >> startTime >> endTime >> filePath >> opaqueId;
+        inputFile >> startTime >> endTime >> filePath >> opaqueId;
 
         vector<int> result;
-        if (fileToRepo[filePath].count(opaqueId) > 0) {
-            int repoId = unionFind.find(fileToRepo[filePath][opaqueId]);
+        if (pathIdCommit[filePath].count(opaqueId) > 0) {
+            int repoId = unionFind.find(pathIdCommit[filePath][opaqueId]);//root
             for (const auto& commit : repositories[repoId]) {
                 if (commit.timeStamp >= startTime && commit.timeStamp <= endTime) {
                     result.push_back(commit.id);
@@ -84,7 +86,6 @@ void DisasterRecovery::handleQueries(int R) {
             }
         }
 
-        sort(result.begin(), result.end());
         for (int id : result) {
             cout << id << " ";
         }
@@ -93,19 +94,27 @@ void DisasterRecovery::handleQueries(int R) {
 }
 
 void DisasterRecovery::run() {
-    cin >> N;
-    cin.ignore();
+
+    std::ifstream inputFile("input.txt");
+    if (!inputFile) {
+        throw logic_error("Error: Could not open input.txt");
+    }
+
+    int N;
+    inputFile >> N;
+    inputFile.ignore();
 
     for (size_t i = 0; i < N; ++i) {
         string inputLine;
-        getline(cin, inputLine);
+        getline(inputFile, inputLine);
         processCommit(inputLine);
     }
 
     buildRepositories();
 
     int R;
-    cin >> R;
-    cin.ignore();
-    handleQueries(R);
+    inputFile >> R;
+    inputFile.ignore();
+
+    handleQueries(R,inputFile);
 }

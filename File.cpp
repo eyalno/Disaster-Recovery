@@ -9,4 +9,4 @@ const std::string& File::getPath() const {
 
 const std::string& File::getOpaqueID() const {
     return opaqueID;
-}
+} 
