@@ -4,3 +4,4 @@
 *.exe
 *.dSYM/
 main
+.DS_Store
