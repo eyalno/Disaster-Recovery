@@ -95,7 +95,7 @@ void DisasterRecovery::handleQueries(int R, ifstream & inputFile) {
 
 void DisasterRecovery::run() {
 
-    std::ifstream inputFile("input.txt");
+    std::ifstream inputFile("Test Input/input.txt");
     if (!inputFile) {
         throw logic_error("Error: Could not open input.txt");
     }
