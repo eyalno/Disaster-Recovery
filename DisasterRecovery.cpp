@@ -17,7 +17,7 @@ void DisasterRecovery::processCommit(const string& inputLine) {
     }
 
     if (!unionFind.addCommit(commit.id)) 
-        return; //discared malformed entries: commit id need to be unique.
+        return; //discared malformed entries: commit id needs to be unique.
 
     string filePath, opaqueId;
     while (ss >> filePath >> opaqueId) {
@@ -42,13 +42,13 @@ void DisasterRecovery::processCommit(const string& inputLine) {
         //we added the file now finding all connected other opaque. if they are in the same repo/set = Ambiguity
         for (const auto& [opaqueId,commitID] : pathIdCommit[path]) {
             if (opaqueId != id && unionFind.find(commitID) == unionFind.find(commit.id)) {
-                throw logic_error("AMBIGUOUS INPUT!");
+                throw logic_error(ambigiousMSG);
             }
         }
         //checking ambiguity for opaqueId -> path
         for (const auto& [otherPath,commitID] : idPathCommit[id]) {
             if (otherPath != path && unionFind.find(commitID) == unionFind.find(commit.id)) {
-                throw logic_error("AMBIGUOUS INPUT!");
+                throw logic_error(ambigiousMSG);
             }
         }
     }
@@ -95,9 +95,9 @@ void DisasterRecovery::handleQueries(int R, ifstream & inputFile) {
 
 void DisasterRecovery::run() {
 
-    std::ifstream inputFile("Test Input/input.txt");
+    std::ifstream inputFile(testPath);
     if (!inputFile) {
-        throw logic_error("Error: Could not open input.txt");
+        throw logic_error(fileNotOpenMSG);
     }
 
     int N;

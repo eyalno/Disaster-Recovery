@@ -26,6 +26,11 @@ private:
     void handleQueries(int R,std::ifstream & inputFile);
 
 
+    static constexpr const char* ambigiousMSG = "AMBIGUOUS INPUT!";
+    static constexpr const char* testPath = "Test Input/input.txt";
+    static constexpr const char* fileNotOpenMSG = "Error: Could not open input.txt";
+
+
 
 public:
     void run();
